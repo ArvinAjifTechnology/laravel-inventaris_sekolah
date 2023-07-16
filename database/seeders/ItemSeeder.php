@@ -24,8 +24,8 @@ class ItemSeeder extends Seeder
                 // 'room_id' => $faker->numberBetween(1, 5), // Replace with your room IDs
                 'description' => $faker->sentence,
                 'condition' => $faker->randomElement(['good', 'fair', 'bad']),
-                'rental_price' => $faker->randomFloat(2, 10, 100),
-                'late_fee_per_day' => $faker->randomFloat(2, 1, 10),
+                'rental_price' => $faker->numberBetween(100000, 1000000), // Random rental price between 1,000 and 1,000,000
+                'late_fee_per_day' => $faker->numberBetween(10000, 1000000),
                 'quantity' => $faker->numberBetween(1, 99999),
                 'created_at' => now(),
                 'updated_at' => now(),
