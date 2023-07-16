@@ -17,62 +17,29 @@ class Room extends Model
         'created' => RoomCreated::class,
     ];
 
+    /**
+     * Mendapatkan semua data ruangan.
+     */
     public static function getAll()
     {
-        $query = "SELECT rooms.*, CONCAT(users.first_name, ' ', users.last_name) AS user_name
-          FROM rooms
-          INNER JOIN users ON rooms.user_id = users.id";
-
-        $result = DB::select($query);
-
-        // Mengonversi hasil ke dalam bentuk koleksi objek jika diperlukan
-        // $rooms = collect($result);
-        return $result;
+        return self::query()
+            ->join('users', 'rooms.user_id', '=', 'users.id')
+            ->select('rooms.*', DB::raw("CONCAT(users.first_name, ' ', users.last_name) AS user_name"))
+            ->get();
     }
 
+    /**
+     * Mendapatkan semua data ruangan untuk operator saat ini.
+     */
     public static function getAllForOperator()
     {
-        $query = "SELECT rooms.*, CONCAT(users.first_name, ' ', users.last_name) AS user_name
-        FROM rooms
-        INNER JOIN users ON rooms.user_id = users.id
-        WHERE users.id = " . Auth::user()->id;
+        $currentUserId = Auth::id();
 
-        $result = DB::select($query);
-
-        // Mengonversi hasil ke dalam bentuk koleksi objek jika diperlukan
-        $rooms = collect($result);
-
-        // Output atau penggunaan data rooms...;
-        return $rooms;
-    }
-
-    public static function findId($id)
-    {
-        return DB::select('select * from rooms where id = ?', [$id]);
-    }
-
-    public static function insert($request)
-    {
-        DB::insert('INSERT INTO rooms (room_name,user_id,description) VALUES ( ?, ?, ?)', [
-            $request->input('room_name'),
-            $request->input('user_id'),
-            $request->input('description')
-        ]);
-    }
-
-    public static function edit($request)
-    {
-        DB::update('UPDATE rooms SET room_name = ? ,user_id = ? ,description = ? WHERE id = ?', [
-            $request->input('room_name'),
-            $request->input('user_id'),
-            $request->input('description'),
-            $request->input('id')
-        ]);
-    }
-
-    public static function destroy($id)
-    {
-        DB::delete('DELETE FROM rooms WHERE id = ?', [$id]);
+        return self::query()
+            ->join('users', 'rooms.user_id', '=', 'users.id')
+            ->where('users.id', $currentUserId)
+            ->select('rooms.*', DB::raw("CONCAT(users.first_name, ' ', users.last_name) AS user_name"))
+            ->get();
     }
 
     /**
