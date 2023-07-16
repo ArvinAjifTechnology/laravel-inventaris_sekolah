@@ -83,7 +83,7 @@ Route::middleware('verified')->group(function () {
     Route::middleware('borrower')->group(function () {
         // route yang hanya bisa diakses oleh borrower
         // Route::get('/borrower/dashboard', 'BorrowerController@dashboard');
-        Route::resource('/borrower/borrows', BorrowerBorrowController::class);
+        Route::resource('/borrower/borrows', BorrowerBorrowController::class)->names('borrower.borrow');
         Route::get('/borrower/borrows/create/search-item', [BorrowerBorrowController::class, 'searchItemView']);
         Route::post('/borrower/borrows/create/search-item', [BorrowerBorrowController::class, 'searchItem'])->name('borrower.borrow.search-item');
         Route::get('/borrower/borrows/create/{item_code}/submit-borrow-request', [BorrowerBorrowController::class, 'submitBorrowRequestView']);
