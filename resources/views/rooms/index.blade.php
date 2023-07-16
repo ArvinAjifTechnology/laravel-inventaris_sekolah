@@ -4,7 +4,7 @@
     <div class="row mt-3">
         <div class="col-md-12">
             @can('admin')
-            <a href="{{ route('rooms.create') }}" class="btn btn-primary mb-2">{{ __('rooms.AddRoomsData') }}</a>
+            <a href="{{ route('admin.rooms.create') }}" class="btn btn-primary mb-2">{{ __('rooms.AddRoomsData') }}</a>
             @endcan
             <table id="basic-datatable" class="table table-striped dt-responsive nowrap w-100">
                 <thead>
@@ -34,9 +34,9 @@
                                 @can('admin')
                                 <a href="{{ url('admin/rooms', $room->id) }}" class="btn btn-info mx-2">{{
                                     __('rooms.Show') }}</a>
-                                <a href="{{ route('rooms.edit', $room->id) }}" class="btn btn-warning mx-2">{{
+                                <a href="{{ route('admin.rooms.edit', $room->id) }}" class="btn btn-warning mx-2">{{
                                     __('rooms.Edit') }}</a>
-                                <form action="{{ route('rooms.destroy', $room->id) }}" method="POST"
+                                <form action="{{ route('admin.rooms.destroy', $room->id) }}" method="POST"
                                     onsubmit="return confirm('{{ __('rooms.ConfirmDeleteRoom') }}')">
                                     @csrf @method('DELETE')
                                     <button type="submit" class="btn btn-danger">
