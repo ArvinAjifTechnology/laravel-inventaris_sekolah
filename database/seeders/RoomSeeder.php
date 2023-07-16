@@ -18,7 +18,7 @@ class RoomSeeder extends Seeder
 
         for ($i = 0; $i < 10; $i++) {
             DB::table('rooms')->insert([
-                'room_name' => $faker->word,
+                'room_name' => $faker->unique()->word,
                 'user_id' => $faker->numberBetween(1, 3),
                 'description' => $faker->paragraph,
                 'created_at' => now(),
