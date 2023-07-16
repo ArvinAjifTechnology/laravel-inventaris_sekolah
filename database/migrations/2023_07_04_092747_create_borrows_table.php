@@ -21,9 +21,9 @@ class CreateBorrowsTable extends Migration
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade')->onUpdate('cascade');
             $table->enum('borrow_status', ['pending', 'completed', 'borrowed', 'rejected']);
             $table->integer('borrow_quantity');
-            $table->float('late_fee');
-            $table->float('total_rental_price');
-            $table->float('sub_total');
+            $table->integer('late_fee');
+            $table->integer('total_rental_price');
+            $table->integer('sub_total');
             $table->timestamps();
         });
 
