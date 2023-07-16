@@ -2,14 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Item;
-use App\Models\Room;
 use App\Models\User;
-use App\Models\Borrow;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
-use Illuminate\Support\Collection;
-use \Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -21,16 +15,14 @@ class UserController extends Controller
      */
     public function index()
     {
-        $users = User::getAll();
-        $users = collect($users);
-        // $users = User::all();
+        $users = User::all();
         return view('users.index', compact('users'));
     }
 
     /**
      * Show the form for creating a new resource.
      */
-    public function create($id = NULL)
+    public function create()
     {
         return view('users.create');
     }
@@ -43,8 +35,8 @@ class UserController extends Controller
         $validator = Validator::make($request->all(), [
             'first_name' => ['required', 'string'],
             'last_name' => ['required', 'string'],
-            'username' => ['required', 'string', Rule::unique('users')],
-            'email' => ['required', 'email', Rule::unique('users')],
+            'username' => ['required', 'string', 'unique:users'],
+            'email' => ['required', 'email', 'unique:users'],
             'role' => ['required', 'string'],
             'gender' => ['required', 'string'],
         ]);
@@ -54,11 +46,12 @@ class UserController extends Controller
                 ->withErrors($validator)
                 ->withInput();
         }
-        $fullName = $request->first_name . $request->last_name;
 
-        User::insert($request);
+        $input = $request->all();
+        $input['password'] = bcrypt($request->email);
+        User::create($input);
 
-        return redirect('admin/users/')->withErrors($validator)->with('status', 'Selamat Data Berhasil Di Tambahkan')->withInput();
+        return redirect('admin/users')->with('status', 'Data berhasil ditambahkan');
     }
 
     /**
@@ -76,8 +69,8 @@ class UserController extends Controller
      */
     public function edit(string $id)
     {
-        $user = DB::selectOne('select * from users  where id = ?', [$id]);
-        // $user = collect($user);
+        $user = User::find($id);
+
         return view('users.edit', compact('user', 'id'));
     }
 
@@ -86,17 +79,13 @@ class UserController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $user = DB::selectOne('select * from users where id = ?', [$id]);
-        // $user = User::where('id', $id)->first();
-        // dd($user);
-        // $user = collect($user);
+        $user = User::find($id);
 
         $validator = Validator::make($request->all(), [
             'first_name' => ['required', 'string'],
             'last_name' => ['required', 'string'],
-            // 'user_code' => ['required', 'string', Rule::unique('users')->ignore($user[0]->id)],
-            'username' => ['required', 'string', Rule::unique('users')->ignore($user->id)],
-            'email' => ['required', 'email', Rule::unique('users')->ignore($user->id)],
+            'username' => ['required', 'string', 'unique:users,username,' . $user->id],
+            'email' => ['required', 'email', 'unique:users,email,' . $user->id],
             'role' => ['required', 'string'],
             'gender' => ['required', 'string'],
         ]);
@@ -106,9 +95,10 @@ class UserController extends Controller
                 ->withErrors($validator)
                 ->withInput();
         }
-        User::edit($request, $id);
 
-        return redirect('/admin/users')->withErrors($validator)->withSuccess('Selamat Data Berhasil Di Update')->with('status', 'Selamat Data Berhasil Di Update')->withInput();
+        $user->update($request->all());
+
+        return redirect('/admin/users')->with('status', 'Data berhasil diperbarui');
     }
 
     /**
@@ -116,17 +106,18 @@ class UserController extends Controller
      */
     public function destroy(string $username)
     {
-        $user = DB::selectOne('SELECT * FROM users WHERE username = ?', [$username]);
-        if ($user) {
-            $roomIds = DB::delete('DELETE FROM rooms WHERE user_id = ?', [$user->id]); // Get the room IDs associated with the user
-            $borrowIds = DB::delete('DELETE FROM borrows WHERE user_id = ?', [$user->id]); // Get the borrow IDs associated with the user
+        $user = User::where('username', $username)->first();
 
-            User::destroy($username); // Delete the user
+        if ($user) {
+            $user->rooms()->delete();
+            $user->borrows()->delete();
+            $user->delete();
         }
+
         if (Gate::allows('admin')) {
-            return redirect('/admin/users')->with('status', 'Data berhasil Di Hapus');
+            return redirect('/admin/users')->with('status', 'Data berhasil dihapus');
         } elseif (Gate::allows('operator')) {
-            return redirect('/oprator/users')->with('status', 'Data berhasil Di Hapus');
+            return redirect('/oprator/users')->with('status', 'Data berhasil dihapus');
         } else {
             abort(403, 'Unauthorized');
         }
