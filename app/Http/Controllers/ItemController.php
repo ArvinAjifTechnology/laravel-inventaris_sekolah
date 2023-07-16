@@ -5,11 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Item;
 use App\Models\Room;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Auth;
 
 class ItemController extends Controller
 {
@@ -19,7 +18,7 @@ class ItemController extends Controller
     public function index()
     {
         if (Gate::allows('admin')) {
-            $items = Item::getAll();
+            $items = Item::latest()->with(['room'])->get();
         } elseif (Gate::allows('operator')) {
             $items = Item::getAllForOperator();
         } else {
@@ -37,10 +36,11 @@ class ItemController extends Controller
         if (Gate::allows('admin')) {
             $rooms = Room::all();
         } elseif (Gate::allows('operator')) {
-            $rooms = Room::latest()->where('user_id', '=', Auth::user()->id)->get();
+            $rooms = Room::where('user_id', Auth::id())->latest()->get();
         } else {
             abort(403, 'Unauthorized');
         }
+
         return view('items.create', compact('rooms'));
     }
 
@@ -59,29 +59,13 @@ class ItemController extends Controller
             'quantity' => ['required', 'integer'],
         ]);
 
-
-        if (Gate::allows('admin')) {
-            if ($validator->fails()) {
-                return redirect('/admin/items/create')
-                    ->withErrors($validator)
-                    ->withInput();
-            }
-
-            Item::insert($request);
-
-            return redirect('/admin/items')->withErrors($validator)->withInput()->with('status', 'Selamat Data Berhasil Di Tambahkan');
-        } elseif (Gate::allows('operator')) {
-            if ($validator->fails()) {
-                return redirect('/operator/items/create')
-                    ->withErrors($validator)
-                    ->withInput();
-            }
-            Item::insert($request);
-
-            return redirect('/operator/items')->withErrors($validator)->withInput()->with('status', 'Selamat Data Berhasil Di Tambahkan');
-        } else {
-            abort(403, 'Unauthorized');
+        if ($validator->fails()) {
+            return redirect(route('admin.items.create'))->withErrors($validator)->withInput();
         }
+
+        Item::create($request->all());
+
+        return redirect(route('admin.items.index'))->with('status', 'Data berhasil ditambahkan');
     }
 
     /**
@@ -89,7 +73,7 @@ class ItemController extends Controller
      */
     public function show(string $id)
     {
-        $item = Item::find($id);
+        $item = Item::findOrFail($id);
 
         return view('items.show', compact('item'));
     }
@@ -99,15 +83,9 @@ class ItemController extends Controller
      */
     public function edit(string $id)
     {
-        if (Gate::allows('admin')) {
-            $item = Item::findId($id);
-            $rooms = Room::getAll();
-        } elseif (Gate::allows('operator')) {
-            $item = Item::findId($id);
-            $rooms = Room::latest()->where('user_id', '=', Auth::user()->id)->get();
-        } else {
-            abort(403, 'Unauthorized');
-        }
+        $item = Item::findOrFail($id);
+        $rooms = Gate::allows('admin') ? Room::getAll() : Room::where('user_id', Auth::id())->latest()->get();
+
         return view('items.edit', compact('item', 'rooms', 'id'));
     }
 
@@ -116,11 +94,11 @@ class ItemController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $id = $request->input('id');
-        $item = DB::select('select * from items where id = ?', [$id]);
+        $item = Item::findOrFail($id);
+
         $validator = Validator::make($request->all(), [
             'item_name' => ['required', 'string'],
-            'item_code' => ['required', 'string', Rule::unique('items')->ignore($item[0]->id)],
+            'item_code' => ['required', 'string', Rule::unique('items')->ignore($item->id)],
             'room_id' => ['required', 'integer'],
             'description' => ['required', 'string'],
             'condition' => ['required', 'string'],
@@ -129,29 +107,13 @@ class ItemController extends Controller
             'quantity' => ['required', 'integer'],
         ]);
 
-        if (Gate::allows('admin')) {
-            if ($validator->fails()) {
-                return redirect('/admin/items/' . $id . 'edit')
-                    ->withErrors($validator)
-                    ->withInput();
-            }
-
-            Item::edit($request);
-
-            return redirect('/admin/items')->withErrors($validator)->with('status', 'Selamat Data Berhasil Di Update')->withInput();
-        } elseif (Gate::allows('operator')) {
-            if ($validator->fails()) {
-                return redirect('/operator/items/' . $id . '/edit')
-                    ->withErrors($validator)
-                    ->withInput();
-            }
-
-            Item::edit($request);
-
-            return redirect('/operator/items')->withErrors($validator)->with('status', 'Selamat Data Berhasil Di Update')->withInput();
-        } else {
-            abort(403, 'Unauthorized');
+        if ($validator->fails()) {
+            return redirect(route('admin.items.edit', $id))->withErrors($validator)->withInput();
         }
+
+        $item->update($request->all());
+
+        return redirect(route('admin.items.index'))->with('status', 'Data berhasil diperbarui');
     }
 
     /**
@@ -159,17 +121,10 @@ class ItemController extends Controller
      */
     public function destroy(string $id)
     {
-        $item = Item::where('id', '=', $id)->first();
+        $item = Item::findOrFail($id);
         $item->borrows()->delete();
+        $item->delete();
 
-        Item::destroy($id);
-
-        if (Gate::allows('admin')) {
-            return redirect('/admin/items')->with('status', 'Data berhasil Di Hapus');
-        } elseif (Gate::allows('operator')) {
-            return redirect('/oprator/items')->with('status', 'Data berhasil Di Hapus');
-        } else {
-            abort(403, 'Unauthorized');
-        }
+        return redirect(route('admin.items.index'))->with('status', 'Data berhasil dihapus');
     }
 }
