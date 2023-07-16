@@ -27,37 +27,31 @@ class Borrow extends Model
 
     public static function getCurrentWeekData()
     {
-        // Mendapatkan tanggal awal dan akhir dari minggu ini
-        $currentWeekStart = date('Y-m-d', strtotime('this week'));
-        $currentWeekEnd = date('Y-m-d', strtotime('this week +6 days'));
+        $currentWeekStart = Carbon::now()->startOfWeek()->format('Y-m-d');
+        $currentWeekEnd = Carbon::now()->endOfWeek()->format('Y-m-d');
 
-        // Menghitung data untuk minggu ini
-        $currentWeekData = self::whereBetween('updated_at', [$currentWeekStart, $currentWeekEnd])->sum('sub_total');
-        // dd($currentWeekStart, $currentWeekEnd, $currentWeekData);
-        return $currentWeekData;
+        return self::whereBetween('updated_at', [$currentWeekStart, $currentWeekEnd])->sum('sub_total');
     }
 
+    /**
+     * Get the previous week's data.
+     */
     public static function getPreviousWeekData()
     {
-        // Mendapatkan tanggal awal dan akhir dari minggu sebelumnya
-        $previousWeekStart = date('Y-m-d', strtotime('last week'));
-        $previousWeekEnd = date('Y-m-d', strtotime('last week +6 days'));
+        $previousWeekStart = Carbon::now()->subWeek()->startOfWeek()->format('Y-m-d');
+        $previousWeekEnd = Carbon::now()->subWeek()->endOfWeek()->format('Y-m-d');
 
-        // Menghitung data untuk minggu sebelumnya
-        $previousWeekData = self::whereBetween('updated_at', [$previousWeekStart, $previousWeekEnd])->sum('sub_total');
-        // dd($previousWeekStart, $previousWeekEnd, $previousWeekData);
-
-        return $previousWeekData;
+        return self::whereBetween('updated_at', [$previousWeekStart, $previousWeekEnd])->sum('sub_total');
     }
 
+    /**
+     * Get the current day's data.
+     */
     public static function getCurrentDayData()
     {
-        $currentDate = date('Y-m-d');
+        $currentDate = Carbon::now()->format('Y-m-d');
 
-        // Menghitung data untuk hari ini
-        $currentDayData = self::whereDate('updated_at', $currentDate)->sum('sub_total');
-
-        return $currentDayData;
+        return self::whereDate('updated_at', $currentDate)->sum('sub_total');
     }
     /**
      * Baris Code Ini Digunakan Untuk
