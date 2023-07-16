@@ -107,8 +107,8 @@
                             </button>
                             @endif
                         </td>
-                        <td>{{ $borrow->item_name }}</td>
-                        <td>{{ $borrow->full_name }}</td>
+                        <td>{{ $borrow->item->item_name }}</td>
+                        <td>{{ $borrow->user->full_name }}</td>
                         <td>{{ $borrow->verification_code_for_borrow_request }}</td>
                         <td>{{ $borrow->borrow_code }}</td>
                         <td>{{ $borrow->borrow_date }}</td>
