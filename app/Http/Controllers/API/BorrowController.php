@@ -1,21 +1,19 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SubmitBorrowRequest;
 use App\Jobs\SendReturnReminderEmail;
-use Carbon\Carbon;
-use App\Models\Item;
-use App\Models\User;
 use App\Models\Borrow;
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\Gate;
-use App\Rules\SufficientQuantityRule;
+use App\Models\Item;
 use App\Notifications\BorrowNotification;
-use Illuminate\Support\Facades\Validator;
 use App\Notifications\VerifiedSubmitBorrowRequestNotification;
+use App\Rules\SufficientQuantityRule;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Validator;
 
 class BorrowController extends Controller
 {
